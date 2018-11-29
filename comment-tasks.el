@@ -69,6 +69,29 @@
                  (setq task-comments (append task-comments (list comment)))))
     task-comments))
 
+(defun comment-tasks-action-goto-entry (event)
+  "Goto the entry that was clicked."
+  (let ((window (posn-window (event-end event)))
+        (pos (posn-point (event-end event)))
+        (tasks-buffer (get-buffer "*Tasks*")))
+    (with-current-buffer tasks-buffer
+      (goto-char pos)
+      (comment-tasks-goto-entry))
+    ))
+
+(defun comment-tasks-goto-entry ()
+  "Display task comment position."
+  (interactive)
+  (let ((entry (comment-tasks-find-entry)))
+    (find-file (get-text-property 0 :path entry))
+    (goto-char (get-text-property 0 :point entry))
+    ))
+
+(defun comment-tasks-find-entry ()
+  "Find the entry in `task-comments' correspond to the current line."
+  (nth (1- (line-number-at-pos)) task-comments))
+
+
 (defun comment-tasks-show ()
   (interactive)
   ;; TODO 指定したフォルダ以下の指定した拡張子の全ファイルに対して、タスクを探す処理を実行
@@ -80,7 +103,8 @@
       (read-only-mode -1) ;; make it writable
       (erase-buffer)
       (loop for task in task-comments
-            do (insert task))
+            do (insert-button (format "%s" task)
+                     'action #'comment-tasks-action-goto-entry))
       (read-only-mode 1) ;; make it read only
       )
     )
