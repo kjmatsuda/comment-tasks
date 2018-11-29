@@ -70,9 +70,12 @@
     (setq comments (get-comments-in-file "comment-tasks.el"))
     (setq task-comments (filter-task-comments comments))
     (with-current-buffer (get-buffer-create "*Tasks*")
+      (read-only-mode -1) ;; make it writable
       (delete-region (point-min) (point-max))
       (loop for task in task-comments
-            do (insert-string task)))
+            do (insert-string task))
+      (read-only-mode 1) ;; make it read only
+      )
     )
   )
 
