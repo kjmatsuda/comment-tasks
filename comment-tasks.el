@@ -36,11 +36,14 @@
   "*If non-nil, *Tasks* buffer updated whenever a file is saved."
   :type 'boolean)
 
+(defvar task-comments '())
+
 ;; TODO この関数を説明できるようにする
 (defun get-comments-in-file (fname)
   (let (already-open
         buf
         start
+        comment
         (comments '()))
     (setq already-open (find-buffer-visiting fname)
           buf (find-file-noselect fname t)) ;; 2nd argument no warn
@@ -51,8 +54,11 @@
                           'face 'font-lock-comment-face))
         (goto-char start)
         (goto-char (next-single-char-property-change (point) 'face))
-        (setq comments (append comments (list (buffer-substring-no-properties
-                                               start (point)))))))
+        (setq comment (propertize (buffer-substring-no-properties start (point)) ;; comment text
+                                  :path (buffer-file-name) ;; file path
+                                  :point start             ;; position of comment 
+                                  ))
+        (setq comments (append comments (list comment)))))
     (unless already-open (kill-buffer buf))
     comments))
 
@@ -70,10 +76,11 @@
     (setq comments (get-comments-in-file "comment-tasks.el"))
     (setq task-comments (filter-task-comments comments))
     (with-current-buffer (get-buffer-create "*Tasks*")
+      (setq-local inhibit-message t)
       (read-only-mode -1) ;; make it writable
-      (delete-region (point-min) (point-max))
+      (erase-buffer)
       (loop for task in task-comments
-            do (insert-string task))
+            do (insert task))
       (read-only-mode 1) ;; make it read only
       )
     )
