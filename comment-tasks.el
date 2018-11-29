@@ -66,16 +66,14 @@
 (defun comment-tasks-show ()
   (interactive)
   ;; TODO 指定したフォルダ以下の指定した拡張子の全ファイルに対して、タスクを探す処理を実行
-  ;; TODO マイナーモードか何かにする(参考 helm-gtags.elの(define-minor-mode helm-gtags-mode ())
   (save-excursion
     (setq comments (get-comments-in-file "comment-tasks.el"))
     (setq task-comments (filter-task-comments comments))
-    (pop-to-buffer "*Tasks*")
-    (delete-region (point-min) (point-max))
-    (loop for task in task-comments
-          do (insert-string task))
+    (with-current-buffer (get-buffer-create "*Tasks*")
+      (delete-region (point-min) (point-max))
+      (loop for task in task-comments
+            do (insert-string task)))
     )
-  nil
   )
 
 ;; TODO autoloadにどういう意味があるか調べる
