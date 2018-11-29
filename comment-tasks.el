@@ -30,13 +30,23 @@
 
 ;;; Code:
 
+;; TODO *Tasks*を定数化する
+;; TODO TODOなどのキーワードをリストで設定できるようにする(defcustom)
+
 (require 'cl)
+
+
+(defvar task-comments '())
 
 (defcustom comment-tasks-auto-update t
   "*If non-nil, *Tasks* buffer updated whenever a file is saved."
   :type 'boolean)
 
-(defvar task-comments '())
+(defface comment-tasks-entry-face
+  '((t))
+  "Basic face for comment-tasks entries in task list buffer."
+  :group 'comment-tasks)
+
 
 ;; TODO この関数を説明できるようにする
 (defun get-comments-in-file (fname)
@@ -108,6 +118,7 @@
       (erase-buffer)
       (loop for task in task-comments
             do (insert-button (format "%s" task)
+                     'face 'comment-tasks-entry-face
                      'action #'comment-tasks-action-goto-entry))
       (read-only-mode 1) ;; make it read only
       )
