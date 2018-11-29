@@ -82,8 +82,12 @@
 (defun comment-tasks-goto-entry ()
   "Display task comment position."
   (interactive)
-  (let ((entry (comment-tasks-find-entry)))
-    (find-file (get-text-property 0 :path entry))
+  (let* ((entry (comment-tasks-find-entry))
+         (fname (get-text-property 0 :path entry))
+         (buf (find-buffer-visiting fname)))
+    (if buf
+        (pop-to-buffer buf)
+      (find-file fname))
     (goto-char (get-text-property 0 :point entry))
     ))
 
