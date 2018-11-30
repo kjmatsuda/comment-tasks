@@ -39,14 +39,27 @@
 (defvar task-comments '())
 
 (defcustom comment-tasks-auto-update t
-  "*If non-nil, *Tasks* buffer updated whenever a file is saved."
+  "*If non-nil, comment-tasks buffer updated whenever a file is saved."
   :type 'boolean)
+
+(defcustom comment-tasks-list-size 0.3
+  "Size (height or width) for the comment-tasks buffer."
+  :group 'comment-tasks
+  :type 'number)
+
+(defcustom comment-tasks-list-position 'below
+  "Position of the comment-tasks buffer.
+Either 'right, 'left, 'above or 'below. This value is passed directly to `split-window'."
+  :group 'comment-tasks
+  :type '(choice (const above)
+                 (const below)
+                 (const left)
+                 (const right)))
 
 (defface comment-tasks-entry-face
   '((t))
-  "Basic face for comment-tasks entries in task list buffer."
+  "Basic face for comment-tasks entries in comment-tasks buffer."
   :group 'comment-tasks)
-
 
 ;; TODO この関数を説明できるようにする
 (defun get-comments-in-file (fname)
@@ -105,6 +118,37 @@
   "Find the entry in `task-comments' correspond to the current line."
   (nth (1- (line-number-at-pos)) task-comments))
 
+(defun comment-tasks-split-size ()
+  "Convert `comment-tasks-list-size' to proper argument for `split-window'."
+  (let ((frame-size (if (member comment-tasks-list-position '(left right))
+                        (frame-width)
+                      (frame-height))))
+    (cond ((integerp comment-tasks-list-size) (- comment-tasks-list-size))
+          (t (- (round (* frame-size comment-tasks-list-size)))))))
+
+(defun comment-tasks-display-buffer (buffer alist)
+  "Display the comment-tasks buffer at the specified position."
+  (or (get-buffer-window buffer)
+      (let ((window (ignore-errors (split-window (frame-root-window) (comment-tasks-split-size) comment-tasks-list-position))))
+        (when window
+          (window--display-buffer buffer window 'window alist t)
+          window))))
+
+(defun comment-tasks-install-display-buffer ()
+  "Install comment-tasks display settings to `display-buffer-alist'."
+  (cl-pushnew `(,(concat "^" (regexp-quote "*Tasks*") "$")
+                comment-tasks-display-buffer)
+              display-buffer-alist
+              :test #'equal))
+
+(comment-tasks-install-display-buffer)
+
+(defun comment-tasks-show-noselect ()
+  "Show the comment-tasks buffer, but don't select it.
+If the comment-tasks buffer doesn't exist, create it."
+  (interactive)
+  (display-buffer "*Tasks*"))
+
 
 (defun comment-tasks-show ()
   (interactive)
@@ -121,6 +165,7 @@
                      'face 'comment-tasks-entry-face
                      'action #'comment-tasks-action-goto-entry))
       (read-only-mode 1) ;; make it read only
+      (comment-tasks-show-noselect)
       )
     )
   )
