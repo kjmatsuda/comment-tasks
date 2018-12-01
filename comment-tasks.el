@@ -30,13 +30,14 @@
 
 ;;; Code:
 
-;; TODO *Tasks*を定数化する
 ;; TODO TODOなどのキーワードをリストで設定できるようにする(defcustom)
 
 (require 'cl)
 
+(defconst comment-tasks-buffer-name "*Tasks*"
+  "Name of the buffer which display comment task entries.")
 
-(defvar task-comments '())
+(defvar comment-tasks-list '())
 
 (defcustom comment-tasks-auto-update t
   "*If non-nil, comment-tasks buffer updated whenever a file is saved."
@@ -86,17 +87,17 @@ Either 'right, 'left, 'above or 'below. This value is passed directly to `split-
     comments))
 
 (defun filter-task-comments (comments)
-  (let (task-comments '())
+  (let (comment-tasks-list '())
     (loop for comment in comments
           do (if (string-match "TODO" comment)
-                 (setq task-comments (append task-comments (list comment)))))
-    task-comments))
+                 (setq comment-tasks-list (append comment-tasks-list (list comment)))))
+    comment-tasks-list))
 
 (defun comment-tasks-action-goto-entry (event)
   "Goto the entry that was clicked."
   (let ((window (posn-window (event-end event)))
         (pos (posn-point (event-end event)))
-        (tasks-buffer (get-buffer "*Tasks*")))
+        (tasks-buffer (get-buffer comment-tasks-buffer-name)))
     (with-current-buffer tasks-buffer
       (goto-char pos)
       (comment-tasks-goto-entry))
@@ -121,8 +122,8 @@ Either 'right, 'left, 'above or 'below. This value is passed directly to `split-
   )
 
 (defun comment-tasks-find-entry ()
-  "Find the entry in `task-comments' correspond to the current line."
-  (nth (1- (line-number-at-pos)) task-comments))
+  "Find the entry in `comment-tasks-list' correspond to the current line."
+  (nth (1- (line-number-at-pos)) comment-tasks-list))
 
 (defun comment-tasks-split-size ()
   "Convert `comment-tasks-list-size' to proper argument for `split-window'."
@@ -142,7 +143,7 @@ Either 'right, 'left, 'above or 'below. This value is passed directly to `split-
 
 (defun comment-tasks-install-display-buffer ()
   "Install comment-tasks display settings to `display-buffer-alist'."
-  (cl-pushnew `(,(concat "^" (regexp-quote "*Tasks*") "$")
+  (cl-pushnew `(,(concat "^" (regexp-quote comment-tasks-buffer-name) "$")
                 comment-tasks-display-buffer)
               display-buffer-alist
               :test #'equal))
@@ -153,20 +154,20 @@ Either 'right, 'left, 'above or 'below. This value is passed directly to `split-
   "Show the comment-tasks buffer, but don't select it.
 If the comment-tasks buffer doesn't exist, create it."
   (interactive)
-  (display-buffer "*Tasks*"))
+  (display-buffer comment-tasks-buffer-name))
 
 (defun comment-tasks-show ()
   (interactive)
   ;; TODO 指定したフォルダ以下の指定した拡張子の全ファイルに対して、タスクを探す処理を実行
   (save-excursion
     (setq comments (get-comments-in-file "comment-tasks.el"))
-    (setq task-comments (filter-task-comments comments))
-    (with-current-buffer (get-buffer-create "*Tasks*")
+    (setq comment-tasks-list (filter-task-comments comments))
+    (with-current-buffer (get-buffer-create comment-tasks-buffer-name)
       (comment-tasks-major-mode)
       (setq-local inhibit-message t)  ;; view-modeに入ったときのメッセージを抑止する
       (read-only-mode -1) ;; make it writable
       (erase-buffer)
-      (loop for task in task-comments
+      (loop for task in comment-tasks-list
             do (insert-button (format "%s" task)
                      'face 'comment-tasks-entry-face
                      'action #'comment-tasks-action-goto-entry))
@@ -208,9 +209,9 @@ If `comment-tasks-minor-mode' is already disabled, just call `quit-window'."
         )
     (when comment-tasks-auto-update
       (remove-hook 'after-save-hook 'comment-tasks-show t))
-    (ignore-errors (quit-windows-on "*Tasks*"))
-    (when (get-buffer "*Tasks*")
-      (bury-buffer (get-buffer "*Tasks*")))))
+    (ignore-errors (quit-windows-on comment-tasks-buffer-name))
+    (when (get-buffer comment-tasks-buffer-name)
+      (bury-buffer (get-buffer comment-tasks-buffer-name)))))
 
 (provide 'comment-tasks)
 
