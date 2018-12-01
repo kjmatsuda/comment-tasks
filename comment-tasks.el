@@ -114,6 +114,12 @@ Either 'right, 'left, 'above or 'below. This value is passed directly to `split-
     (goto-char (get-text-property 0 :point entry))
     ))
 
+(defun  comment-tasks-display-entry ()
+  (interactive)
+  (save-selected-window
+    (comment-tasks-goto-entry))
+  )
+
 (defun comment-tasks-find-entry ()
   "Find the entry in `task-comments' correspond to the current line."
   (nth (1- (line-number-at-pos)) task-comments))
@@ -149,7 +155,6 @@ If the comment-tasks buffer doesn't exist, create it."
   (interactive)
   (display-buffer "*Tasks*"))
 
-
 (defun comment-tasks-show ()
   (interactive)
   ;; TODO 指定したフォルダ以下の指定した拡張子の全ファイルに対して、タスクを探す処理を実行
@@ -157,7 +162,8 @@ If the comment-tasks buffer doesn't exist, create it."
     (setq comments (get-comments-in-file "comment-tasks.el"))
     (setq task-comments (filter-task-comments comments))
     (with-current-buffer (get-buffer-create "*Tasks*")
-      (setq-local inhibit-message t)
+      (comment-tasks-major-mode)
+      (setq-local inhibit-message t)  ;; view-modeに入ったときのメッセージを抑止する
       (read-only-mode -1) ;; make it writable
       (erase-buffer)
       (loop for task in task-comments
@@ -170,17 +176,41 @@ If the comment-tasks buffer doesn't exist, create it."
     )
   )
 
+(defun comment-tasks-quit-window ()
+  "Disable `comment-tasks-minor-mode' and hide the comment-tasks buffer.
+If `comment-tasks-minor-mode' is already disabled, just call `quit-window'."
+  (interactive)
+  (if comment-tasks-minor-mode
+      ;; disabling `comment-tasks-minor-mode' also quits the window
+      (comment-tasks-minor-mode -1)
+    (quit-window)))
+
+(defvar comment-tasks-major-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "RET") #'comment-tasks-goto-entry)
+    (define-key map (kbd "C-j") #'comment-tasks-display-entry)
+    (define-key map (kbd "j") #'next-line)
+    (define-key map (kbd "k") #'previous-line)
+    (define-key map (kbd "q") #'comment-tasks-quit-window)
+    map))
+
+(define-derived-mode comment-tasks-major-mode special-mode "Tasks")
+
 ;; TODO autoloadにどういう意味があるか調べる
 ;;;###autoload
-(define-minor-mode comment-tasks-mode ()
-  "Enable comment-tasks"
-  :init-value nil
-  :global     nil
-  (if comment-tasks-mode
-      (when comment-tasks-auto-update
-        (add-hook 'after-save-hook 'comment-tasks-show nil t))
+(define-minor-mode comment-tasks-minor-mode
+  nil :global nil
+  (if comment-tasks-minor-mode
+      (progn
+        (when comment-tasks-auto-update
+          (add-hook 'after-save-hook 'comment-tasks-show nil t))
+        (comment-tasks-show)
+        )
     (when comment-tasks-auto-update
-      (remove-hook 'after-save-hook 'comment-tasks-show t))))
+      (remove-hook 'after-save-hook 'comment-tasks-show t))
+    (ignore-errors (quit-windows-on "*Tasks*"))
+    (when (get-buffer "*Tasks*")
+      (bury-buffer (get-buffer "*Tasks*")))))
 
 (provide 'comment-tasks)
 
