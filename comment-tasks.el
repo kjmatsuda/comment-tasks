@@ -87,11 +87,11 @@ Either 'right, 'left, 'above or 'below. This value is passed directly to `split-
     comments))
 
 (defun filter-task-comments (comments)
-  (let (comment-tasks-list '())
+  (let (comment-tasks '())
     (loop for comment in comments
           do (if (string-match "TODO" comment)
-                 (setq comment-tasks-list (append comment-tasks-list (list comment)))))
-    comment-tasks-list))
+                 (setq comment-tasks (append comment-tasks (list comment)))))
+    comment-tasks))
 
 (defun comment-tasks-action-goto-entry (event)
   "Goto the entry that was clicked."
@@ -156,12 +156,42 @@ If the comment-tasks buffer doesn't exist, create it."
   (interactive)
   (display-buffer comment-tasks-buffer-name))
 
+(defun comment-tasks-search-tasks-in-dir (dir)
+  (let ((files (directory-files dir t)))
+    (dolist (file files)
+      ;; TODO ループのcontinueの構文を調べる
+      (if (not (string= (file-name-nondirectory file) "."))
+          (if (not (string= (file-name-nondirectory file) ".."))
+              (if (not (string= (file-name-nondirectory file) ".git"))
+                  (if (f-directory? file)
+                      (comment-tasks-search-tasks-in-dir file)
+                    (progn
+                      (setq comments (get-comments-in-file file))
+                      (setq comment-tasks-list (append comment-tasks-list (filter-task-comments comments)))
+                      )
+                    )
+                )
+            )
+        )
+      )
+    )
+  )
+
+(defun comment-tasks-make-list ()
+  (let ((dir (locate-dominating-file default-directory ".git")))
+    (if (not dir)
+        ;; root dir not found
+        (setq dir default-directory)
+      )
+    (comment-tasks-search-tasks-in-dir dir)
+    )
+  )
+
 (defun comment-tasks-show ()
   (interactive)
-  ;; TODO 指定したフォルダ以下の指定した拡張子の全ファイルに対して、タスクを探す処理を実行
   (save-excursion
-    (setq comments (get-comments-in-file "comment-tasks.el"))
-    (setq comment-tasks-list (filter-task-comments comments))
+    (setq comment-tasks-list '())
+    (comment-tasks-make-list)
     (with-current-buffer (get-buffer-create comment-tasks-buffer-name)
       (comment-tasks-major-mode)
       (setq-local inhibit-message t)  ;; view-modeに入ったときのメッセージを抑止する
