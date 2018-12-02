@@ -108,9 +108,10 @@ Either 'right, 'left, 'above or 'below. This value is passed directly to `split-
   (let* ((entry (comment-tasks-find-entry))
          (fname (get-text-property 0 :path entry))
          (buf (find-buffer-visiting fname)))
+    (other-window 1)
     (if buf
-        (pop-to-buffer buf)
-      (find-file fname))
+        (switch-to-buffer buf)
+      (switch-to-buffer (find-file-noselect fname t)))
     (goto-char (get-text-property 0 :point entry))))
 
 (defun  comment-tasks-display-entry ()
