@@ -100,8 +100,7 @@ Either 'right, 'left, 'above or 'below. This value is passed directly to `split-
         (tasks-buffer (get-buffer comment-tasks-buffer-name)))
     (with-current-buffer tasks-buffer
       (goto-char pos)
-      (comment-tasks-goto-entry))
-    ))
+      (comment-tasks-goto-entry))))
 
 (defun comment-tasks-goto-entry ()
   "Display task comment position."
@@ -112,14 +111,12 @@ Either 'right, 'left, 'above or 'below. This value is passed directly to `split-
     (if buf
         (pop-to-buffer buf)
       (find-file fname))
-    (goto-char (get-text-property 0 :point entry))
-    ))
+    (goto-char (get-text-property 0 :point entry))))
 
 (defun  comment-tasks-display-entry ()
   (interactive)
   (save-selected-window
-    (comment-tasks-goto-entry))
-  )
+    (comment-tasks-goto-entry)))
 
 (defun comment-tasks-find-entry ()
   "Find the entry in `comment-tasks-list' correspond to the current line."
@@ -167,15 +164,7 @@ If the comment-tasks buffer doesn't exist, create it."
                       (comment-tasks-search-tasks-in-dir file)
                     (progn
                       (setq comments (get-comments-in-file file))
-                      (setq comment-tasks-list (append comment-tasks-list (filter-task-comments comments)))
-                      )
-                    )
-                )
-            )
-        )
-      )
-    )
-  )
+                      (setq comment-tasks-list (append comment-tasks-list (filter-task-comments comments)))))))))))
 
 (defun comment-tasks-make-list ()
   (let ((dir (locate-dominating-file default-directory ".git")))
@@ -183,9 +172,7 @@ If the comment-tasks buffer doesn't exist, create it."
         ;; root dir not found
         (setq dir default-directory)
       )
-    (comment-tasks-search-tasks-in-dir dir)
-    )
-  )
+    (comment-tasks-search-tasks-in-dir dir)))
 
 (defun comment-tasks-show ()
   (interactive)
@@ -202,10 +189,7 @@ If the comment-tasks buffer doesn't exist, create it."
                      'face 'comment-tasks-entry-face
                      'action #'comment-tasks-action-goto-entry))
       (read-only-mode 1) ;; make it read only
-      (comment-tasks-show-noselect)
-      )
-    )
-  )
+      (comment-tasks-show-noselect))))
 
 (defun comment-tasks-quit-window ()
   "Disable `comment-tasks-minor-mode' and hide the comment-tasks buffer.
@@ -235,8 +219,7 @@ If `comment-tasks-minor-mode' is already disabled, just call `quit-window'."
       (progn
         (when comment-tasks-auto-update
           (add-hook 'after-save-hook 'comment-tasks-show nil t))
-        (comment-tasks-show)
-        )
+        (comment-tasks-show))
     (when comment-tasks-auto-update
       (remove-hook 'after-save-hook 'comment-tasks-show t))
     (ignore-errors (quit-windows-on comment-tasks-buffer-name))
