@@ -66,21 +66,16 @@ Either 'right, 'left, 'above or 'below. This value is passed directly to `split-
 (defun get-comments-in-file (fname)
   (let (already-open
         buf
-        start
         comment
         (comments '()))
     (setq already-open (find-buffer-visiting fname)
           buf (find-file-noselect fname t)) ;; 2nd argument no warn
     (with-current-buffer buf
       (goto-char (point-min))
-      (while (setq start (text-property-any
-                          (point) (point-max)
-                          'face 'font-lock-comment-face))
-        (goto-char start)
-        (goto-char (next-single-char-property-change (point) 'face))
-        (setq comment (propertize (buffer-substring-no-properties start (point)) ;; comment text
+      (while (comment-search-forward (point-max) t)
+        (setq comment (propertize (concat (buffer-substring-no-properties (point) (line-end-position)) "\n") ;; comment text
                                   :path (buffer-file-name) ;; file path
-                                  :point start             ;; position of comment 
+                                  :point (point)             ;; position of comment
                                   ))
         (setq comments (append comments (list comment)))))
     (unless already-open (kill-buffer buf))
