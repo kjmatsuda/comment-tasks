@@ -75,7 +75,6 @@ Either 'right, 'left, 'above or 'below. This value is passed directly to `split-
   :group 'comment-tasks
   :type 'boolean)
 
-;; TODO この関数を説明できるようにする
 (defun get-comments-in-file (fname)
   (let (already-open
         buf
@@ -178,7 +177,6 @@ If the comment-tasks buffer doesn't exist, create it."
 (defun comment-tasks-search-tasks-recursively (dir)
   (let ((files (directory-files dir t)))
     (dolist (file files)
-      ;; TODO ループのcontinueの構文を調べる
       (if (not (string= (file-name-nondirectory file) "."))
           (if (not (string= (file-name-nondirectory file) ".."))
               (if (not (string= (file-name-nondirectory file) ".git"))
@@ -199,48 +197,39 @@ If the comment-tasks buffer doesn't exist, create it."
     (comment-tasks-search-tasks-recursively dir)))
 
 (defun comment-tasks-make-list ()
+  (setq comment-tasks-list '())
   (setq comment-tasks-list (append comment-tasks-list
                                    (filter-task-comments (get-comments-in-file (buffer-file-name))))))
 
-;; TODO comment-tasks-showとの重複を除く
+(defun comment-tasks-create-buffer ()
+  (with-current-buffer (get-buffer-create comment-tasks-buffer-name)
+    (comment-tasks-major-mode)
+    (setq-local inhibit-message t)  ;; view-modeに入ったときのメッセージを抑止する
+    (read-only-mode -1) ;; make it writable
+    (erase-buffer)
+    (loop for task in comment-tasks-list
+          do (insert-button (format "%s" task)
+                            'face 'comment-tasks-entry-face
+                            'action #'comment-tasks-action-goto-entry))
+    (goto-char (point-min))
+    (read-only-mode 1) ;; make it read only
+    ))
+
 (defun comment-tasks-update-buffer ()
   (interactive)
   (save-excursion
-    (setq comment-tasks-list '())
     (comment-tasks-make-list)
-    (with-current-buffer (get-buffer-create comment-tasks-buffer-name)
-      (comment-tasks-major-mode)
-      (setq-local inhibit-message t)  ;; view-modeに入ったときのメッセージを抑止する
-      (read-only-mode -1) ;; make it writable
-      (erase-buffer)
-      (loop for task in comment-tasks-list
-            do (insert-button (format "%s" task)
-                     'face 'comment-tasks-entry-face
-                     'action #'comment-tasks-action-goto-entry))
-      (goto-char (point-min))
-      (read-only-mode 1) ;; make it read only
-      (comment-tasks-show-noselect))))
-
+    (comment-tasks-create-buffer)
+    (comment-tasks-show-noselect)))
 
 (defun comment-tasks-show ()
   (interactive)
   (save-excursion
-    (setq comment-tasks-list '())
     (comment-tasks-make-list)
-    (with-current-buffer (get-buffer-create comment-tasks-buffer-name)
-      (comment-tasks-major-mode)
-      (setq-local inhibit-message t)  ;; view-modeに入ったときのメッセージを抑止する
-      (read-only-mode -1) ;; make it writable
-      (erase-buffer)
-      (loop for task in comment-tasks-list
-            do (insert-button (format "%s" task)
-                     'face 'comment-tasks-entry-face
-                     'action #'comment-tasks-action-goto-entry))
-      (goto-char (point-min))
-      (read-only-mode 1) ;; make it read only
-      (if comment-tasks-focus-after-activation
-          (comment-tasks-show-select)
-        (comment-tasks-show-noselect)))))
+    (comment-tasks-create-buffer)
+    (if comment-tasks-focus-after-activation
+        (comment-tasks-show-select)
+      (comment-tasks-show-noselect))))
 
 (defun comment-tasks-quit-window ()
   "Disable `comment-tasks-minor-mode' and hide the comment-tasks buffer.
@@ -262,7 +251,6 @@ If `comment-tasks-minor-mode' is already disabled, just call `quit-window'."
 
 (define-derived-mode comment-tasks-major-mode special-mode "Tasks")
 
-;; TODO autoloadにどういう意味があるか調べる
 ;;;###autoload
 (define-minor-mode comment-tasks-minor-mode
   nil :global nil
