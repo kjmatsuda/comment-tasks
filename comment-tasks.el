@@ -30,8 +30,6 @@
 
 ;;; Code:
 
-;; TODO TODOなどのキーワードをリストで設定できるようにする(defcustom)
-
 (require 'cl)
 
 (defconst comment-tasks-buffer-name "*Tasks*"
@@ -39,11 +37,18 @@
 
 (defvar comment-tasks-list '())
 
-;; TODO defgroupの書き方は？
+(defgroup comment-tasks nil
+  "Variables for `comment-tasks' package."
+  :group 'programming)
+
+(defcustom comment-tasks-keyword-list '("TODO")
+  "Keyword list of which matching comments are shown on buffer."
+  )
 
 (defcustom comment-tasks-auto-update t
   "*If non-nil, comment-tasks buffer updated whenever a file is saved."
   :type 'boolean)
+;;REF test
 
 (defcustom comment-tasks-list-size 0.3
   "Size (height or width) for the comment-tasks buffer."
@@ -89,10 +94,18 @@ Either 'right, 'left, 'above or 'below. This value is passed directly to `split-
     (unless already-open (kill-buffer buf))
     comments))
 
+(defun comment-is-matched-with-keyword-list (comment)
+  (let ((matched nil))
+    (loop for keyword in comment-tasks-keyword-list
+          do (if (string-match keyword comment)
+                 (setq matched t))
+          )
+    matched))
+
 (defun filter-task-comments (comments)
   (let (comment-tasks '())
     (loop for comment in comments
-          do (if (string-match "TODO" comment)
+          do (if (comment-is-matched-with-keyword-list comment)
                  (setq comment-tasks (append comment-tasks (list comment)))))
     comment-tasks))
 
