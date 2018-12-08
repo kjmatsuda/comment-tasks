@@ -149,7 +149,7 @@ If the comment-tasks buffer doesn't exist, create it."
   (interactive)
   (display-buffer comment-tasks-buffer-name))
 
-(defun comment-tasks-search-tasks-in-dir (dir)
+(defun comment-tasks-search-tasks-recursively (dir)
   (let ((files (directory-files dir t)))
     (dolist (file files)
       ;; TODO ループのcontinueの構文を調べる
@@ -157,18 +157,24 @@ If the comment-tasks buffer doesn't exist, create it."
           (if (not (string= (file-name-nondirectory file) ".."))
               (if (not (string= (file-name-nondirectory file) ".git"))
                   (if (f-directory? file)
-                      (comment-tasks-search-tasks-in-dir file)
+                      (comment-tasks-search-tasks-recursively file)
                     (progn
                       (setq comments (get-comments-in-file file))
                       (setq comment-tasks-list (append comment-tasks-list (filter-task-comments comments)))))))))))
 
-(defun comment-tasks-make-list ()
+;; I want to make this function enable, but it easily costs too much time.
+;; So currently I don't recommend this function.
+(defun comment-tasks-make-list-recursively ()
   (let ((dir (locate-dominating-file default-directory ".git")))
     (if (not dir)
         ;; root dir not found
         (setq dir default-directory)
       )
-    (comment-tasks-search-tasks-in-dir dir)))
+    (comment-tasks-search-tasks-recursively dir)))
+
+(defun comment-tasks-make-list ()
+  (setq comment-tasks-list (append comment-tasks-list
+                                   (filter-task-comments (get-comments-in-file (buffer-file-name))))))
 
 (defun comment-tasks-show ()
   (interactive)
