@@ -39,6 +39,8 @@
 
 (defvar comment-tasks-list '())
 
+;; TODO defgroupの書き方は？
+
 (defcustom comment-tasks-auto-update t
   "*If non-nil, comment-tasks buffer updated whenever a file is saved."
   :type 'boolean)
@@ -61,6 +63,12 @@ Either 'right, 'left, 'above or 'below. This value is passed directly to `split-
   '((t))
   "Basic face for comment-tasks entries in comment-tasks buffer."
   :group 'comment-tasks)
+
+(defcustom comment-tasks-focus-after-activation nil
+  "Non-nil to select the comment-tasks window automatically when
+`comment-tasks-minor-mode' is activated."
+  :group 'comment-tasks
+  :type 'boolean)
 
 ;; TODO この関数を説明できるようにする
 (defun get-comments-in-file (fname)
@@ -143,6 +151,11 @@ Either 'right, 'left, 'above or 'below. This value is passed directly to `split-
 
 (comment-tasks-install-display-buffer)
 
+(defun comment-tasks-show-select ()
+  "Show the comment-tasks buffer, and select it"
+  (interactive)
+  (pop-to-buffer comment-tasks-buffer-name))
+
 (defun comment-tasks-show-noselect ()
   "Show the comment-tasks buffer, but don't select it.
 If the comment-tasks buffer doesn't exist, create it."
@@ -176,6 +189,29 @@ If the comment-tasks buffer doesn't exist, create it."
   (setq comment-tasks-list (append comment-tasks-list
                                    (filter-task-comments (get-comments-in-file (buffer-file-name))))))
 
+(defun comment-tasks-update-buffer()
+  
+  )
+;; TODO comment-tasks-showとの重複を除く
+(defun comment-tasks-update-buffer ()
+  (interactive)
+  (save-excursion
+    (setq comment-tasks-list '())
+    (comment-tasks-make-list)
+    (with-current-buffer (get-buffer-create comment-tasks-buffer-name)
+      (comment-tasks-major-mode)
+      (setq-local inhibit-message t)  ;; view-modeに入ったときのメッセージを抑止する
+      (read-only-mode -1) ;; make it writable
+      (erase-buffer)
+      (loop for task in comment-tasks-list
+            do (insert-button (format "%s" task)
+                     'face 'comment-tasks-entry-face
+                     'action #'comment-tasks-action-goto-entry))
+      (goto-char (point-min))
+      (read-only-mode 1) ;; make it read only
+      (comment-tasks-show-noselect))))
+
+
 (defun comment-tasks-show ()
   (interactive)
   (save-excursion
@@ -190,8 +226,11 @@ If the comment-tasks buffer doesn't exist, create it."
             do (insert-button (format "%s" task)
                      'face 'comment-tasks-entry-face
                      'action #'comment-tasks-action-goto-entry))
+      (goto-char (point-min))
       (read-only-mode 1) ;; make it read only
-      (comment-tasks-show-noselect))))
+      (if comment-tasks-focus-after-activation
+          (comment-tasks-show-select)
+        (comment-tasks-show-noselect)))))
 
 (defun comment-tasks-quit-window ()
   "Disable `comment-tasks-minor-mode' and hide the comment-tasks buffer.
@@ -220,10 +259,10 @@ If `comment-tasks-minor-mode' is already disabled, just call `quit-window'."
   (if comment-tasks-minor-mode
       (progn
         (when comment-tasks-auto-update
-          (add-hook 'after-save-hook 'comment-tasks-show nil t))
+          (add-hook 'after-save-hook 'comment-tasks-update-buffer nil t))
         (comment-tasks-show))
     (when comment-tasks-auto-update
-      (remove-hook 'after-save-hook 'comment-tasks-show t))
+      (remove-hook 'after-save-hook 'comment-tasks-update-buffer t))
     (ignore-errors (quit-windows-on comment-tasks-buffer-name))
     (when (get-buffer comment-tasks-buffer-name)
       (bury-buffer (get-buffer comment-tasks-buffer-name)))))
