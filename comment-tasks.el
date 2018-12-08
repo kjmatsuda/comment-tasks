@@ -202,9 +202,6 @@ If the comment-tasks buffer doesn't exist, create it."
   (setq comment-tasks-list (append comment-tasks-list
                                    (filter-task-comments (get-comments-in-file (buffer-file-name))))))
 
-(defun comment-tasks-update-buffer()
-  
-  )
 ;; TODO comment-tasks-showとの重複を除く
 (defun comment-tasks-update-buffer ()
   (interactive)
