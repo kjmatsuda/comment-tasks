@@ -204,7 +204,7 @@ If the comment-tasks buffer doesn't exist, create it."
 (defun comment-tasks-create-buffer ()
   (with-current-buffer (get-buffer-create comment-tasks-buffer-name)
     (comment-tasks-major-mode)
-    (setq-local inhibit-message t)  ;; view-modeに入ったときのメッセージを抑止する
+    (setq-local inhibit-message t)  ;; suppress message when get into view-mode, because it's annoying.
     (read-only-mode -1) ;; make it writable
     (erase-buffer)
     (loop for task in comment-tasks-list
