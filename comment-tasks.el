@@ -4,7 +4,7 @@
 
 ;; Author: Koji Matsuda <kjmatsuda1985@gmail.com>
 ;; URL: https://github.com/kjmatsuda/comment-tasks
-;; Version: alpha
+;; Version: 1.0.0
 ;; Package-Requires: ()
 
 ;; This program is free software; you can redistribute it and/or modify
