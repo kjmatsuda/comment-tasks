@@ -66,11 +66,6 @@ If this value is non-nil, the cursor is moved to the comment-tasks buffer automa
 ## Sample Configuration
 
 ```lisp
-;;; Enable helm-gtags-mode
-(add-hook 'c-mode-hook 'helm-gtags-mode)
-(add-hook 'c++-mode-hook 'helm-gtags-mode)
-(add-hook 'asm-mode-hook 'helm-gtags-mode)
-
 ;; customize
 (setq comment-tasks-keyword-list '("TODO" "WAITING"))
 (setq comment-tasks-auto-update t)
