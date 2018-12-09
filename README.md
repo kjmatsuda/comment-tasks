@@ -30,13 +30,13 @@ You can use these commands on that mode.
 
 #### Default Key Mapping
 
-| Key | Description                                        |
-|-----+----------------------------------------------------|
-| RET | Jump to the point of the task where cursor focuses |
-| C-j | Display the point of the task where cursor focuses |
-| j   | Move cursor to next line                           |
-| k   | Move cursor to previous line                       |
-| q   | Quit the window                                    |
+| Key        | Description                                            |
+|:-----------|:------------------------------------------------------:|
+| RET        | Jump to the point of the task where cursor focuses     |
+| C-j        | Display the point of the task where cursor focuses     |
+| j          | Move cursor to next line                               |
+| k          | Move cursor to previous line                           |
+| q          | Quit the window                                        |
 
 ## Customize Variables
 
