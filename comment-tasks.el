@@ -48,7 +48,6 @@
 (defcustom comment-tasks-auto-update t
   "*If non-nil, comment-tasks buffer updated whenever a file is saved."
   :type 'boolean)
-;;REF test
 
 (defcustom comment-tasks-list-size 0.3
   "Size (height or width) for the comment-tasks buffer."
